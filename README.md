@@ -56,6 +56,12 @@ folder that directly contains the `.igs.mha` files, at any depth.
 - **Missing-tracking detection**: a per-instrument `tracking_status` array (0 = missing,
   1 = tracked) flagging frames whose 4×4 pose is frozen (identical to the previous
   frame), with **% tracked per instrument** reported in the summary and table.
+- **In-use masking**: every tracking-derived signal (velocity, acceleration, jerk,
+  angular speed, 3D trajectory, inter-instrument distance/angle, path length, etc.) is
+  set to NaN — and hidden from plots and averages — on frames where the instrument is
+  untracked, or where Cavitron/Scissors is more than 100 mm from Bipolar (treated as not
+  in use). Force is from a separate sensor and is not masked. `% in use` is reported per
+  instrument.
 - **Additional metrics** (suggested surgical-dexterity indicators): net displacement &
   straightness (economy of motion), working volume, idle fraction, and force impulse.
 - **Per-trial statistics table** with every metric above — displayed and exported to
