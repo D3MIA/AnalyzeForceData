@@ -43,11 +43,15 @@ folder that directly contains the `.igs.mha` files, at any depth.
 - **Force magnitude** `√(fx²+fy²+fz²)` — one panel per participant.
 - **Velocity, acceleration, jerk** per instrument per trial — one figure per participant.
 - **3D instrument trajectories** colored by normalized time — one figure per participant.
-- **Summative figures**: per-participant averages and a cross-participant comparison
-  of average force / velocity / acceleration / jerk.
-- **Per-trial statistics table**: duration, registration RMSE, mean/peak force, and
-  per-instrument path length, mean/peak speed, mean acceleration/jerk — displayed and
-  exported to `data/metrics_per_trial.csv` and `data/metrics_per_participant.csv`.
+- **Path length** traveled per instrument.
+- **Inter-instrument distance** (Bipolar–Cavitron, Bipolar–Scissors, Cavitron–Scissors),
+  both along-trial (time series) and summative (trial-average bars).
+- **Summative figures**: cross-participant comparison of average force / velocity /
+  acceleration / jerk / path length / straightness.
+- **Additional metrics** (suggested surgical-dexterity indicators): net displacement &
+  straightness (economy of motion), working volume, idle fraction, and force impulse.
+- **Per-trial statistics table** with every metric above — displayed and exported to
+  `data/metrics_per_trial.csv` and `data/metrics_per_participant.csv`.
 
 `.igs.mha` data files are git-ignored (see `.gitignore`); only the notebook and
 docs are tracked.
