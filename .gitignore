@@ -1,2 +1,3 @@
 data/*.igs.mha
 data/**/*.igs.mha
+data/metrics_*.csv

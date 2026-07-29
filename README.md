@@ -42,6 +42,9 @@ they are grouped under a single participant named after the folder.)
 - **3D instrument trajectories** colored by normalized time — one figure per participant.
 - **Summative figures**: per-participant averages and a cross-participant comparison
   of average force / velocity / acceleration / jerk.
+- **Per-trial statistics table**: duration, registration RMSE, mean/peak force, and
+  per-instrument path length, mean/peak speed, mean acceleration/jerk — displayed and
+  exported to `data/metrics_per_trial.csv` and `data/metrics_per_participant.csv`.
 
 `.igs.mha` data files are git-ignored (see `.gitignore`); only the notebook and
 docs are tracked.
