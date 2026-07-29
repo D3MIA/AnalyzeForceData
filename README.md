@@ -44,8 +44,13 @@ folder that directly contains the `.igs.mha` files, at any depth.
 - **Velocity, acceleration, jerk** per instrument per trial — one figure per participant.
 - **3D instrument trajectories** colored by normalized time — one figure per participant.
 - **Path length** traveled per instrument.
-- **Inter-instrument distance** (Bipolar–Cavitron, Bipolar–Scissors, Cavitron–Scissors),
-  both along-trial (time series) and summative (trial-average bars).
+- **Inter-instrument distance** for the pairs used together (Bipolar–Cavitron,
+  Bipolar–Scissors), both along-trial and summative. Distances above 100 mm are set to
+  NaN (instruments not interacting) and excluded.
+- **Instrument orientation**: each instrument's long axis is the pivot (shaft) direction
+  `normalize(−Rᵀd)` from its `*TipTo*Transform`; the angle between Bipolar–Cavitron and
+  Bipolar–Scissors long axes is reported along-trial and summatively, plus per-instrument
+  angular speed.
 - **Summative figures**: cross-participant comparison of average force / velocity /
   acceleration / jerk / path length / straightness.
 - **Missing-tracking detection**: a per-instrument `tracking_status` array (0 = missing,
