@@ -1,1 +1,2 @@
 data/*.igs.mha
+data/**/*.igs.mha
