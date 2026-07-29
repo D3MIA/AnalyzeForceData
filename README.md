@@ -12,25 +12,28 @@ Each file is one trial and contains, per frame:
 
 ## Data layout
 
-One subfolder per participant; each participant runs several trials:
+Package the whole study as a **single zip** whose contents are one subfolder per
+participant; each participant runs several trials:
 
 ```
-data/
-  P01/  trial1.igs.mha  trial2.igs.mha  trial3.igs.mha
-  P02/  trial1.igs.mha  trial2.igs.mha  trial3.igs.mha
-  ...
+study.zip
+ └─ P01/  trial1.igs.mha  trial2.igs.mha  trial3.igs.mha
+ └─ P02/  trial1.igs.mha  trial2.igs.mha  trial3.igs.mha
+ └─ ...
 ```
 
 The subfolder name is used as the participant id, and trials are numbered by
-filename order within each folder. (Files placed directly in `data/` still work —
-they are grouped under a single participant named after the folder.)
+filename order within each folder. An extra wrapper folder inside the zip (e.g.
+everything under a top-level `data/`) is fine — participants are detected by the
+folder that directly contains the `.igs.mha` files, at any depth.
 
 ## Usage
 
-1. Put each participant's `.igs.mha` files in `data/<participant>/`.
+1. Zip your participant folders into a single `.zip` (default path `data/study.zip`).
 2. Open [`surgical_force_analysis.ipynb`](surgical_force_analysis.ipynb) in
-   **Google Colab** (or Jupyter) and run all cells. In Colab you can upload a zip of
-   the `data/` tree from the notebook (see §2) or mount Google Drive.
+   **Google Colab** (or Jupyter), set `DATA_ZIP`, and run all cells. In Colab you can
+   upload the zip from the notebook (see §2) or mount Google Drive. The zip is
+   extracted into `data_unzipped/` on each run.
 
 ## What the notebook produces
 
