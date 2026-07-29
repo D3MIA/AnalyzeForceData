@@ -48,6 +48,9 @@ folder that directly contains the `.igs.mha` files, at any depth.
   both along-trial (time series) and summative (trial-average bars).
 - **Summative figures**: cross-participant comparison of average force / velocity /
   acceleration / jerk / path length / straightness.
+- **Missing-tracking detection**: a per-instrument `tracking_status` array (0 = missing,
+  1 = tracked) flagging frames whose 4×4 pose is frozen (identical to the previous
+  frame), with **% tracked per instrument** reported in the summary and table.
 - **Additional metrics** (suggested surgical-dexterity indicators): net displacement &
   straightness (economy of motion), working volume, idle fraction, and force impulse.
 - **Per-trial statistics table** with every metric above — displayed and exported to
