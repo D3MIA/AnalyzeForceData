@@ -1,1 +1,5 @@
 data/*.igs.mha
+data/**/*.igs.mha
+data/*.zip
+data/metrics_*.csv
+data_unzipped/
