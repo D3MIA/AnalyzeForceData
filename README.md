@@ -64,6 +64,14 @@ folder that directly contains the `.igs.mha` files, at any depth.
   instrument.
 - **Additional metrics** (suggested surgical-dexterity indicators): net displacement &
   straightness (economy of motion), working volume, idle fraction, and force impulse.
+- **Instrument-use localization** (how tightly clustered an instrument's use is): alongside
+  the axis-aligned bounding-box working volume (kept as-is), two orientation-invariant
+  measures per instrument — the **covariance-ellipsoid volume** `(4/3)π·√(λ₁λ₂λ₃)` from the
+  3×3 position covariance (overall spread, frame-independent), its **anisotropy** `λ₁/λ₃`
+  (motion confined to a line/plane vs. an isotropic blob), and a dwell-time-weighted
+  **occupancy entropy** reported as the effective number of occupied 2 mm voxels `exp(H)`
+  (spatial concentration — low means the tip revisits a small core). Computed over in-use
+  frames; smaller ellipsoid volume / occupancy ⇒ more localized use.
 - **Per-trial statistics table** with every metric above — displayed and exported to
   `data/metrics_per_trial.csv` and `data/metrics_per_participant.csv`.
 
