@@ -63,7 +63,10 @@ folder that directly contains the `.igs.mha` files, at any depth.
   in use). Force is from a separate sensor and is not masked. `% in use` is reported per
   instrument.
 - **Additional metrics** (suggested surgical-dexterity indicators): net displacement &
-  straightness (economy of motion), working volume, idle fraction, and force impulse.
+  straightness (economy of motion), working volume, idle fraction, force impulse,
+  **force coefficient of variation** (`SD/mean × 100%` — normalised force variability;
+  lower = steadier control) and **mean |dF/dt|** (N/s — mean absolute rate of force
+  change; lower = more controlled, gradual force application, distinct from impulse).
 - **Instrument-use localization** (how tightly clustered an instrument's use is): alongside
   the axis-aligned bounding-box working volume (kept as-is), two orientation-invariant
   measures per instrument — the **covariance-ellipsoid volume** `(4/3)π·√(λ₁λ₂λ₃)` from the
