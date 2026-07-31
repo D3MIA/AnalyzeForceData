@@ -50,18 +50,18 @@ folder that directly contains the `.igs.mha` files, at any depth.
 - **Instrument orientation**: each instrument's long axis is the pivot (shaft) direction
   `normalize(−Rᵀd)` from its `*TipTo*Transform`; the angle between Bipolar–Cavitron and
   Bipolar–Scissors long axes is reported along-trial and summatively, plus per-instrument
-  angular speed.
+  angular speed and angular acceleration (each plotted against normalized trial time).
 - **Summative figures**: cross-participant comparison of average force / velocity /
   acceleration / jerk / path length / straightness.
 - **Missing-tracking detection**: a per-instrument `tracking_status` array (0 = missing,
   1 = tracked) flagging frames whose 4×4 pose is frozen (identical to the previous
   frame), with **% tracked per instrument** reported in the summary and table.
 - **In-use masking**: every tracking-derived signal (velocity, acceleration, jerk,
-  angular speed, 3D trajectory, inter-instrument distance/angle, path length, etc.) is
-  set to NaN — and hidden from plots and averages — on frames where the instrument is
-  untracked, or where Cavitron/Scissors is more than 100 mm from Bipolar (treated as not
-  in use). Force is from a separate sensor and is not masked. `% in use` is reported per
-  instrument.
+  angular speed, angular acceleration, 3D trajectory, inter-instrument distance/angle,
+  path length, etc.) is set to NaN — and hidden from plots and averages — on frames where
+  the instrument is untracked, or where Cavitron/Scissors is more than 100 mm from Bipolar
+  (treated as not in use). Force is from a separate sensor and is not masked. `% in use`
+  is reported per instrument.
 - **Additional metrics** (suggested surgical-dexterity indicators): net displacement &
   straightness (economy of motion), working volume, idle fraction, force impulse,
   **force coefficient of variation** (`SD/mean × 100%` — normalised force variability;
