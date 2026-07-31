@@ -80,3 +80,21 @@ folder that directly contains the `.igs.mha` files, at any depth.
 
 `.igs.mha` data files are git-ignored (see `.gitignore`); only the notebook and
 docs are tracked.
+
+## Ex-vivo dataset (different layout)
+
+[`analyze_exvivo.ipynb`](analyze_exvivo.ipynb) runs the **spread / instrument-use
+localization** analysis (§11b above — covariance-ellipsoid volume, anisotropy, and
+dwell-weighted occupancy) on a **second dataset with a different layout**: a single
+tabular file where every row is one metric for one instrument, and the samples are packed
+as a comma-separated string in a `data` column (columns: `participant`, `trial`,
+`expertise`, `level`, `instrument`, `metric`, `data`, `len`).
+
+- `timestamp` is shared across all rows of the same `participant`+`trial`.
+- Each instrument's `position` is filtered by that instrument's own `captured_flag`.
+- Only `position` for **scissors, cavitron and bipolar** is analysed.
+
+Set `DATA_FILE` (default `data/exvivo.tsv`; `.csv`/`.parquet`/`.pickle`/`.xlsx` also work)
+and run all cells. It reports spread **per participant**, **per expertise** and **per
+level** as figures, and exports `data/exvivo_spread_per_trial.csv` plus grouped summaries
+(all git-ignored).
