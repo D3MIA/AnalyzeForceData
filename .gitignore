@@ -3,3 +3,8 @@ data/**/*.igs.mha
 data/*.zip
 data/metrics_*.csv
 data_unzipped/
+
+# ex-vivo analysis inputs/outputs (single tabular data file + generated report)
+data/exvivo.*
+full_data.json
+exvivo_report/
