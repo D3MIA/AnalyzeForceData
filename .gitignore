@@ -6,5 +6,5 @@ data_unzipped/
 
 # ex-vivo analysis inputs/outputs (single tabular data file + generated report)
 data/exvivo.*
-data/exvivo_spread_*.csv
-data/exvivo_spread_*.png
+full_data.json
+exvivo_report/
