@@ -63,6 +63,16 @@ MOTION_SCALE = {"Bipolar": 9.0, "Cavitron": 16.0, "Scissors": 6.0}
 # Fraction of the trial each instrument is actually engaged with tissue.
 INUSE_TARGET = {"Bipolar": 0.78, "Cavitron": 0.75, "Scissors": 0.11}
 
+# The 4 registration fiducials (BipolarCollectedPoint0..3) in the common frame — the
+# quadrilateral working area the tips move within (README §4). Ordered around the
+# rectangle; roughly encloses the tip extent above.
+FIDUCIALS = [
+    [155.0, 226.0, -520.0],
+    [213.0, 226.0, -520.0],
+    [213.0, 268.0, -520.0],
+    [155.0, 268.0, -520.0],
+]
+
 rng = np.random.default_rng(20260728)  # deterministic output
 
 
@@ -362,6 +372,7 @@ def main() -> None:
             "voxel_size": VOXEL_SIZE,
             "plane_dist_max": PLANE_DIST_MAX,
             "time_unit": "s",
+            "fiducials": FIDUCIALS,
         },
         "trials": trials,
         "tables": {"per_trial": per_trial, "per_participant": per_participant},
