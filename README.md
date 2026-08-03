@@ -29,13 +29,31 @@ folder that directly contains the `.igs.mha` files, at any depth.
 
 ## Usage
 
+The analysis is split into **two notebooks** — data processing and visualization —
+connected by a single JSON file:
+
+```
+surgical_force_processing.ipynb   →   data/analysis_data.json   →   surgical_force_visualization.ipynb
+        (read + compute)                   (single file)                  (plot everything)
+```
+
 1. Zip your participant folders into a single `.zip` (default path `data/study.zip`).
-2. Open [`surgical_force_analysis.ipynb`](surgical_force_analysis.ipynb) in
+2. Open [`surgical_force_processing.ipynb`](surgical_force_processing.ipynb) in
    **Google Colab** (or Jupyter), set `DATA_ZIP`, and run all cells. In Colab you can
    upload the zip from the notebook (see §2) or mount Google Drive. The zip is
-   extracted into `data_unzipped/` on each run.
+   extracted into `data_unzipped/` on each run. This notebook computes **every metric**
+   and writes them to `DATA_JSON` (default `data/analysis_data.json`); it also writes
+   the CSV statistics tables.
+3. Open [`surgical_force_visualization.ipynb`](surgical_force_visualization.ipynb) and
+   run all cells. It reads only `DATA_JSON` — no raw data or recomputation — and produces
+   all the figures and tables. Re-run it freely (e.g. while tweaking plots) without
+   re-parsing the recordings.
 
-## What the notebook produces
+> The processing notebook does all reading + computation; the visualization notebook
+> does all plotting. To change a metric, edit the processing notebook and re-export the
+> JSON; to change a figure, edit only the visualization notebook.
+
+## What the analysis produces
 
 - **Point-wise rigid registration** of every trial (all participants) onto one common
   reference frame using the 4 fiducial points (SVD / Kabsch).
@@ -75,11 +93,12 @@ folder that directly contains the `.igs.mha` files, at any depth.
   **occupancy entropy** reported as the effective number of occupied 2 mm voxels `exp(H)`
   (spatial concentration — low means the tip revisits a small core). Computed over in-use
   frames; smaller ellipsoid volume / occupancy ⇒ more localized use.
-- **Per-trial statistics table** with every metric above — displayed and exported to
-  `data/metrics_per_trial.csv` and `data/metrics_per_participant.csv`.
+- **Per-trial statistics table** with every metric above — exported to
+  `data/metrics_per_trial.csv` and `data/metrics_per_participant.csv` (by the processing
+  notebook) and displayed by the visualization notebook.
 
-`.igs.mha` data files are git-ignored (see `.gitignore`); only the notebook and
-docs are tracked.
+`.igs.mha` data files and the generated `data/analysis_data.json` are git-ignored (see
+`.gitignore`); only the notebooks and docs are tracked.
 
 ## Ex-vivo dataset (different layout)
 
