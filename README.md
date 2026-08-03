@@ -81,6 +81,17 @@ folder that directly contains the `.igs.mha` files, at any depth.
 `.igs.mha` data files are git-ignored (see `.gitignore`); only the notebook and
 docs are tracked.
 
+### Sample analysis export
+
+The notebook bundles everything it computes into a single `analysis_data.json`
+(config + per-frame time series + summary tables). A small **synthetic** copy is
+committed under [`Examples/`](Examples/) so plotting / reporting code can be
+developed without the real (tens-of-MB) recordings:
+
+- [`Examples/sample_analysis_data.json`](Examples/sample_analysis_data.json) — fake ~180 KB export, identical schema.
+- [`Examples/generate_sample_analysis_data.py`](Examples/generate_sample_analysis_data.py) — seeded generator that produced it.
+- [`Examples/README_analysis_data.md`](Examples/README_analysis_data.md) — field-by-field schema documentation.
+
 ## Ex-vivo dataset (different layout)
 
 [`analyze_exvivo.ipynb`](analyze_exvivo.ipynb) runs the **spread / instrument-use
