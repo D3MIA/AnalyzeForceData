@@ -63,8 +63,10 @@ per_participant = pd.DataFrame(data["tables"]["per_participant"])
 | `smooth_window` | `int` | Frame width of the smoothing kernel. |
 | `idle_speed` | `float` | mm/s below which a tip counts as idle. |
 | `voxel_size` | `float` | mm edge of the occupancy-grid voxel. |
-| `plane_dist_max` | `float` | mm gate: paired instruments farther apart are "not in use". |
+| `resection_dist_max` | `float` | mm in-use gate: a tip farther than this from the trial's `Resection_Location` is "not in use". |
 | `time_unit` | `str` | Unit of `duration` (`"s"`). |
+| `fiducials` | `[[x,y,z]]` | The 4 registration fiducials in the common frame. |
+| `plane_axes` | `[[u],[v],[n]]` | Orthonormal axes of the fiducial working plane; `n` is the out-of-plane normal (the force pyramid's depth axis). |
 
 ### `trials[i]` — one trial
 
@@ -83,6 +85,7 @@ by instrument name; per-pair entries by `pair_key`.
 | `duration` | `float` | Trial length in `meta.time_unit`. |
 | `rmse` | `float` | Fiducial-registration RMSE (mm); ~0 = good fit. |
 | `present_instruments` | `[str]` | Instruments actually tracked in this trial. |
+| `resection` | `[x,y,z]` | The trial's fixed `Resection_Location`, registered into the common frame — the in-use reference point and the center of its force-pyramid map (`null` if the recording had none). |
 
 **Per-frame time series** (length `n_frames`)
 
@@ -97,15 +100,18 @@ by instrument name; per-pair entries by `pair_key`.
 | `pos_plot[inst]` | `[[x,y,z]]` | Registered tip position (mm) for 3-D trajectory plots. |
 | `ang_speed[inst]` | `[float]` | Long-axis angular speed (deg/s). |
 | `ang_accel[inst]` | `[float]` | Long-axis angular acceleration (deg/s²). |
-| `tracking_status[inst]` | `[int]` | `1` tracked, `0` missing (frozen pose). |
+| `tracking_status[inst]` | `[int]` | `1` tracked (`Status = OK`), `0` not tracked (`INVALID`). |
+| `in_use[inst]` | `[int]` | `1` while the tip is within `resection_dist_max` of `resection`, else `0`. Independent of tracking. |
+| `resection_dist[inst]` | `[float]` | Tip-to-`Resection_Location` distance (mm) — what the in-use flag thresholds. |
 | `dist[pair]` | `[float]` | Inter-instrument tip distance (mm). |
 | `angle[pair]` | `[float]` | Angle between long axes (deg). |
 
 > **NaN convention.** Tracking-derived signals (`kin.*`, `pos_plot`,
 > `ang_speed`, `ang_accel`, `dist`, `angle`) are `NaN` on frames where the
-> instrument is untracked or **not in use** (a paired tip more than
-> `plane_dist_max` from the Bipolar). Smoothing also leaves a few `NaN` at the
-> edges. `fmag`/`dFdt` come from a separate sensor and are never masked.
+> instrument is **not in use** (tip farther than `resection_dist_max` from the
+> trial's `Resection_Location`) or untracked (`Status = INVALID`). Smoothing also
+> leaves a few `NaN` at the edges. `fmag`/`dFdt` come from a separate sensor and
+> are never masked.
 
 **Per-trial scalars** (force)
 
@@ -121,7 +127,9 @@ by instrument name; per-pair entries by `pair_key`.
 
 | Key | Meaning |
 |-----|---------|
-| `inuse_frac` | Fraction of frames the tip is in use. |
+| `inuse_frac` | Fraction of frames the tip is in use (within `resection_dist_max` of `resection`). |
+| `track_ok_inuse` | Tracking success — fraction of **in-use** frames with `Status = OK`. Frames where the instrument is parked are excluded, since tracking does not matter there. |
+| `resection_dist_mean` | Mean tip-to-resection distance (mm) over the frames used for the signals. |
 | `pathlen` | Total path length travelled (mm). |
 | `netdisp` | Net displacement start→end (mm). |
 | `straightness` | `netdisp / pathlen` (economy of motion). |

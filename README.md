@@ -3,11 +3,16 @@
 Analysis of surgical instrument tracking + force recordings stored as IGSIO/PLUS
 sequence metafiles (`*.igs.mha`).
 
-Each file is one trial and contains, per frame:
+Each file is one trial. Its header carries:
+
+- `Resection_Location` — the fixed resection point for that whole trial (the in-use reference)
+- `BipolarCollectedPoint0..3` — 4 fiducial points used to register trials into a common frame
+
+and, per frame:
 
 - `*TipToWorldTransform` — 4×4 pose of each instrument tip (**Bipolar**, **Cavitron**, **Scissors**)
+- `Seq_Frame<idx>_<Instrument>Status` — `OK` / `INVALID` tracking status of that instrument
 - `Force` — `fx fy fz tx ty tz` (3D force + 3D torque)
-- `BipolarCollectedPoint0..3` — 4 fiducial points used to register trials into a common frame
 - `Timestamp` — frame time in seconds
 
 ## Data layout
@@ -71,15 +76,21 @@ surgical_force_processing.ipynb   →   data/analysis_data.json   →   surgical
   angular speed and angular acceleration (each plotted against normalized trial time).
 - **Summative figures**: cross-participant comparison of average force / velocity /
   acceleration / jerk / path length / straightness.
-- **Missing-tracking detection**: a per-instrument `tracking_status` array (0 = missing,
-  1 = tracked) flagging frames whose 4×4 pose is frozen (identical to the previous
-  frame), with **% tracked per instrument** reported in the summary and table.
-- **In-use masking**: every tracking-derived signal (velocity, acceleration, jerk,
-  angular speed, angular acceleration, 3D trajectory, inter-instrument distance/angle,
-  path length, etc.) is set to NaN — and hidden from plots and averages — on frames where
-  the instrument is untracked, or where Cavitron/Scissors is more than 100 mm from Bipolar
-  (treated as not in use). Force is from a separate sensor and is not masked. `% in use`
-  is reported per instrument.
+- **Tracking status**: the per-frame `<Instrument>Status` field (`OK` / `INVALID`) becomes
+  a per-instrument `tracking_status` array (1 = tracked, 0 = not tracked); recordings with
+  no status field fall back to the legacy frozen-pose heuristic. **Tracking success is
+  reported over in-use frames only** — an instrument parked away from the resection site
+  does not need to be tracked — as `% tracked (in use)` in the summary, figures and table.
+- **In-use masking**: an instrument is **in use** while its tip is within **30 mm**
+  (`RESECTION_DIST_MAX`) of the trial's fixed `Resection_Location`; farther away it counts
+  as parked. Every tracking-derived signal (velocity, acceleration, jerk, angular speed,
+  angular acceleration, 3D trajectory, inter-instrument distance/angle, path length, etc.)
+  is set to NaN — and hidden from plots and averages — on frames that are not in use or not
+  tracked. Force is from a separate sensor and is not masked. `% in use` and the mean
+  tip-to-resection distance are reported per instrument.
+- **Force pyramid** (Sawaya et al. 2017): the spatial distribution of applied force,
+  **centered on `Resection_Location`** and drawn on the plane fitted through the 4
+  fiducials — in-plane axes `(u, v)`, with the force summed along the out-of-plane normal.
 - **Additional metrics** (suggested surgical-dexterity indicators): net displacement &
   straightness (economy of motion), working volume, idle fraction, force impulse,
   **force coefficient of variation** (`SD/mean × 100%` — normalised force variability;

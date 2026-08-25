@@ -44,7 +44,7 @@ PARTICIPANTS = ["Bianca", "Matheus", "Mohammed"]
 SMOOTH_WINDOW = 11        # frames, matches the notebook's smoothing kernel
 IDLE_SPEED = 5.0          # mm/s below which a tip is considered idle
 VOXEL_SIZE = 2.0          # mm, occupancy-grid voxel edge
-PLANE_DIST_MAX = 50.0     # mm, in-use gate for the paired instruments
+RESECTION_DIST_MAX = 30.0  # mm, in-use gate: distance from the tip to Resection_Location
 FS = 20.0                 # Hz sampling rate used to fabricate timestamps
 
 # Keep it small: 3 participants x 2 trials, ~60 frames each.
@@ -72,6 +72,22 @@ FIDUCIALS = [
     [213.0, 268.0, -520.0],
     [155.0, 268.0, -520.0],
 ]
+# Resection_Location: the fixed point every trial is worked around (header field of the
+# recording). In-use = tip within RESECTION_DIST_MAX of it; it is also the center of the
+# force-pyramid map. Kept identical across the fake trials (same phantom).
+RESECTION = np.array([186.0, 246.0, -521.0])
+# Where a parked instrument sits — far enough from RESECTION to fall outside the gate.
+PARKED_OFFSET = np.array([55.0, -40.0, 35.0])
+
+
+def plane_axes(fiducials) -> list:
+    """[u, v, n] of the fiducial working plane: in-plane principal axes + out-of-plane normal."""
+    fid = np.asarray(fiducials, float)
+    _, _, vt = np.linalg.svd(fid - fid.mean(0))
+    return [[float(x) for x in row] for row in vt]
+
+
+PLANE_AXES = plane_axes(FIDUCIALS)
 
 rng = np.random.default_rng(20260728)  # deterministic output
 
@@ -118,8 +134,11 @@ def tracking_status(n: int) -> np.ndarray:
     return st
 
 
-def inuse_mask(n: int, frac: float) -> np.ndarray:
-    """Boolean per-frame engagement mask covering ~`frac` of the trial."""
+def engaged_mask(n: int, frac: float) -> np.ndarray:
+    """Boolean per-frame engagement mask covering ~`frac` of the trial.
+
+    Frames outside it are "parked": the fake tip is moved away from the resection point,
+    which is what actually drives the in-use flag (distance < RESECTION_DIST_MAX)."""
     base = smooth(rng.standard_normal(n), 15)
     thr = np.quantile(base, 1.0 - frac)
     return base >= thr
@@ -130,8 +149,14 @@ def inuse_mask(n: int, frac: float) -> np.ndarray:
 # ---------------------------------------------------------------------------
 def instrument_signals(name: str, n: int, dt: float):
     pos = trajectory(CENTERS[name], n, MOTION_SCALE[name])
+    # park the tip away from the resection site outside the engaged stretches, so the
+    # in-use flag follows from the geometry exactly as the notebook computes it
+    engaged = engaged_mask(n, INUSE_TARGET[name])
+    pos = np.where(engaged[:, None], pos, pos + PARKED_OFFSET)
     track = tracking_status(n)
-    use = inuse_mask(n, INUSE_TARGET[name]) & (track == 1)
+    resect_dist = np.linalg.norm(pos - RESECTION, axis=1)
+    in_use = resect_dist < RESECTION_DIST_MAX      # the in-use flag (tracking plays no part)
+    use = in_use & (track == 1)                    # mask applied to the derived signals
 
     # speed / accel / jerk from finite differences, in mm/s, mm/s^2, mm/s^3
     vel_vec = np.gradient(pos, dt, axis=0)
@@ -156,7 +181,9 @@ def instrument_signals(name: str, n: int, dt: float):
         "pos": pos,                     # raw, for distances
         "pos_plot": pos_masked,         # NaN where not in use
         "track": track,
-        "use": use,
+        "in_use": in_use,               # near the resection point (regardless of tracking)
+        "resect_dist": resect_dist,     # tip -> Resection_Location distance (mm)
+        "use": use,                     # in use AND tracked -> the signal mask
         "velocity": mask(speed),
         "acceleration": mask(accel),
         "jerk": mask(jerk),
@@ -209,7 +236,7 @@ def make_trial(participant: str, trial_idx: int) -> dict:
     dist, angle = {}, {}
     for (a, b), key in zip(PAIRS, PAIR_KEYS):
         d = np.linalg.norm(sig[a]["pos"] - sig[b]["pos"], axis=1)
-        # gate: not-in-use frames -> NaN (mirrors PLANE_DIST_MAX behaviour)
+        # gate: frames where either instrument is not in use -> NaN (§5 masking)
         both_use = sig[a]["use"] & sig[b]["use"]
         d = np.where(both_use, d, np.nan)
         ang = smooth(rng.standard_normal(n)) * 20 + (60 if key.endswith("Cavitron") else 100)
@@ -221,7 +248,12 @@ def make_trial(participant: str, trial_idx: int) -> dict:
     def scal(fn):
         return {name: fn(name) for name in INSTRUMENTS}
 
-    inuse_frac = scal(lambda nm: float(sig[nm]["use"].mean()))
+    inuse_frac = scal(lambda nm: float(sig[nm]["in_use"].mean()))
+    # tracking success counts in-use frames only: a parked instrument need not be tracked
+    track_ok_inuse = scal(lambda nm: (float((sig[nm]["track"][sig[nm]["in_use"]] == 1).mean())
+                                      if sig[nm]["in_use"].any() else float("nan")))
+    resect_dist_mean = scal(lambda nm: (float(sig[nm]["resect_dist"][sig[nm]["use"]].mean())
+                                        if sig[nm]["use"].any() else float("nan")))
     pathlen = scal(lambda nm: float(np.nansum(np.abs(np.diff(
         np.where(sig[nm]["use"][:, None], sig[nm]["pos"], np.nan), axis=0))).sum()))
     netdisp = scal(lambda nm: float(np.linalg.norm(sig[nm]["pos"][-1] - sig[nm]["pos"][0])))
@@ -244,6 +276,7 @@ def make_trial(participant: str, trial_idx: int) -> dict:
         "duration": duration,
         "rmse": float(rng.random() * 1e-13),   # registration is ~perfect on fakes
         "present_instruments": list(INSTRUMENTS),
+        "resection": [float(x) for x in RESECTION],
         "tnorm": nan_list(tnorm),
         "fmag": nan_list(fmag),
         "dFdt": nan_list(dFdt),
@@ -257,6 +290,8 @@ def make_trial(participant: str, trial_idx: int) -> dict:
         "ang_speed": {nm: nan_list(sig[nm]["ang_speed"]) for nm in INSTRUMENTS},
         "ang_accel": {nm: nan_list(sig[nm]["ang_accel"]) for nm in INSTRUMENTS},
         "tracking_status": {nm: [int(x) for x in sig[nm]["track"]] for nm in INSTRUMENTS},
+        "in_use": {nm: [int(x) for x in sig[nm]["in_use"]] for nm in INSTRUMENTS},
+        "resection_dist": {nm: nan_list(sig[nm]["resect_dist"]) for nm in INSTRUMENTS},
         "dist": {k: nan_list(v) for k, v in dist.items()},
         "angle": {k: nan_list(v) for k, v in angle.items()},
         "force_mean": float(np.mean(fmag)),
@@ -266,6 +301,8 @@ def make_trial(participant: str, trial_idx: int) -> dict:
         "dFdt_abs_mean": float(np.mean(dFdt)),
         "torque_mean": float(np.mean(torque)),
         "inuse_frac": inuse_frac,
+        "track_ok_inuse": track_ok_inuse,
+        "resection_dist_mean": resect_dist_mean,
         "pathlen": pathlen,
         "netdisp": netdisp,
         "straightness": straightness,
@@ -307,8 +344,10 @@ def per_trial_row(t: dict) -> dict:
         "torque_mean": round(t["torque_mean"], 5),
     }
     for nm in INSTRUMENTS:
-        row[f"{nm}_tracked_pct"] = round(float(np.mean(sig[nm]["track"])) * 100, 2)
         row[f"{nm}_inuse_pct"] = round(t["inuse_frac"][nm] * 100, 2)
+        # tracking success over in-use frames only
+        row[f"{nm}_tracked_pct"] = round(t["track_ok_inuse"][nm] * 100, 2)
+        row[f"{nm}_resect_dist_mm"] = round(t["resection_dist_mean"][nm], 2)
         row[f"{nm}_path_mm"] = round(t["pathlen"][nm], 1)
         row[f"{nm}_speed_mean"] = round(nanmean(sig[nm]["velocity"]), 2)
         row[f"{nm}_speed_peak"] = round(float(np.nanmax(sig[nm]["velocity"])), 2)
@@ -370,9 +409,10 @@ def main() -> None:
             "smooth_window": SMOOTH_WINDOW,
             "idle_speed": IDLE_SPEED,
             "voxel_size": VOXEL_SIZE,
-            "plane_dist_max": PLANE_DIST_MAX,
+            "resection_dist_max": RESECTION_DIST_MAX,
             "time_unit": "s",
             "fiducials": FIDUCIALS,
+            "plane_axes": PLANE_AXES,
         },
         "trials": trials,
         "tables": {"per_trial": per_trial, "per_participant": per_participant},
